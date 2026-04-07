@@ -1,3 +1,39 @@
-gearbox
-SpectrogramImage
-project
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Data (too large for git)
+data/raw_audio/
+data/spectrograms/
+data/npy/
+
+# Model artifacts (too large for git)
+models/*.keras
+models/*.h5
+models/*.joblib
+models/*.json
+
+# Uploads
+app/static/uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/

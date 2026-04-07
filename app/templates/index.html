@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anomalous Sound Detection — Machine Health Monitor</title>
+    <meta name="description" content="CNN Autoencoder-based anomalous sound detection system for industrial machine health monitoring.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2332;
+            --border: #2a3a4e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 2rem 0;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(59,130,246,0.08) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 720px;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Upload Card */
+        .upload-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .drop-zone svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .drop-zone p { color: var(--text-secondary); font-size: 0.9rem; }
+        .drop-zone .highlight { color: var(--accent); font-weight: 500; }
+
+        .file-input { display: none; }
+
+        .file-name {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            display: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 0.875rem;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px var(--accent-glow);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Results */
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-header h2 { font-size: 1.1rem; font-weight: 600; }
+        .result-header .timestamp { font-size: 0.8rem; color: var(--text-secondary); }
+
+        .classification-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 0 2rem 1.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-normal {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            border-top: 1px solid var(--border);
+        }
+
+        .score-item {
+            background: var(--bg-card);
+            padding: 1.25rem 1.5rem;
+        }
+
+        .score-item label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .score-item .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .spectrogram-section {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .spectrogram-section h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .spectrogram-section img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* Flash messages */
+        .flash-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🔊 Machine Sound Anomaly Detector</h1>
+    <p>CNN Autoencoder · Log-Mel Spectrogram · Mahalanobis Scoring</p>
+</header>
+
+<div class="container">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="flash-error">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Result (shown after prediction) -->
+    {% if result %}
+    <div class="result-card">
+        <div class="result-header">
+            <h2>{{ filename }}</h2>
+            <span class="timestamp">{{ timestamp }}</span>
+        </div>
+
+        <div class="classification-badge
+            {% if result.classification == 'NORMAL' %}badge-normal
+            {% elif result.classification == 'NEEDS MAINTENANCE' %}badge-warning
+            {% else %}badge-danger{% endif %}">
+            {% if result.classification == 'NORMAL' %}✓
+            {% elif result.classification == 'NEEDS MAINTENANCE' %}⚠
+            {% else %}✗{% endif %}
+            {{ result.classification }}
+        </div>
+
+        <div class="scores-grid">
+            <div class="score-item">
+                <label>Mahalanobis Score</label>
+                <div class="value">{{ result.mahalanobis_score }}</div>
+            </div>
+            <div class="score-item">
+                <label>Reconstruction Error</label>
+                <div class="value">{{ "%.6f"|format(result.reconstruction_error) }}</div>
+            </div>
+        </div>
+
+        {% if spectrogram_url %}
+        <div class="spectrogram-section">
+            <h3>Log-Mel Spectrogram</h3>
+            <img src="{{ spectrogram_url }}" alt="Spectrogram of uploaded audio">
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Upload Form -->
+    <div class="upload-card">
+        <form method="POST" action="/predict" enctype="multipart/form-data" id="uploadForm">
+            <div class="drop-zone" id="dropZone">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9
+                          a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0
+                          0-3 3m3-3v11.25"/>
+                </svg>
+                <p>Drag & drop an audio file here, or <span class="highlight">browse</span></p>
+                <p style="margin-top:0.5rem;font-size:0.8rem">Supported: .wav, .mp3, .flac, .ogg (max 50 MB)</p>
+                <input type="file" name="audio_file" class="file-input" id="fileInput"
+                       accept=".wav,.mp3,.flac,.ogg">
+            </div>
+            <div class="file-name" id="fileName"></div>
+            <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                Analyze Sound
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<footer>
+    CNN-Based Spectrogram Model for Machine Sound Analysis
+</footer>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const submitBtn = document.getElementById('submitBtn');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileName();
+        }
+    });
+
+    fileInput.addEventListener('change', updateFileName);
+
+    function updateFileName() {
+        if (fileInput.files.length) {
+            fileName.textContent = '📁 ' + fileInput.files[0].name;
+            fileName.style.display = 'block';
+            submitBtn.disabled = false;
+        }
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        submitBtn.textContent = 'Analyzing...';
+        submitBtn.disabled = true;
+    });
+</script>
+
+</body>
+</html>
