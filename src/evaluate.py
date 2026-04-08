@@ -267,21 +267,28 @@ class AnomalyScorer:
 
     def _classify(self, mahal_dist, recon_error):
         """
-        Combined classification using both Mahalanobis distance and
-        reconstruction error. Both must agree for NORMAL; either can
-        trigger WARNING or ANOMALY.
-        """
-        mahal_label = "NORMAL"
-        if mahal_dist > self.threshold_critical:
-            mahal_label = "ANOMALY"
-        elif mahal_dist > self.threshold_warning:
-            mahal_label = "NEEDS MAINTENANCE"
+        Combined classification using both reconstruction error (primary)
+        and Mahalanobis distance (secondary).
 
+        Reconstruction error is used as the primary signal because it is
+        the direct output of the autoencoder and consistently outperforms
+        Mahalanobis distance (which degrades through PCA compression).
+
+        Mahalanobis is used as a secondary escalation signal only.
+        """
+        # Primary signal: reconstruction error
         recon_label = "NORMAL"
         if recon_error > self.recon_threshold_critical:
             recon_label = "ANOMALY"
         elif recon_error > self.recon_threshold_warning:
             recon_label = "NEEDS MAINTENANCE"
+
+        # Secondary signal: Mahalanobis can only escalate, never downgrade
+        mahal_label = "NORMAL"
+        if mahal_dist > self.threshold_critical:
+            mahal_label = "ANOMALY"
+        elif mahal_dist > self.threshold_warning:
+            mahal_label = "NEEDS MAINTENANCE"
 
         # Take the more severe of the two
         severity = {"NORMAL": 0, "NEEDS MAINTENANCE": 1, "ANOMALY": 2}

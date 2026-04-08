@@ -305,7 +305,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.png:
-        convert_all_datasets()
+        print("=" * 60)
+        print("  AUDIO → LOG-MEL SPECTROGRAM (.png) CONVERSION")
+        print("=" * 60)
+        pairs = [
+            (config.RAW_TRAIN_DIR, config.SPEC_TRAIN_DIR),
+            (config.RAW_SOURCE_TEST_DIR, config.SPEC_SOURCE_TEST_DIR),
+            (config.RAW_TARGET_TEST_DIR, config.SPEC_TARGET_TEST_DIR),
+        ]
+        for audio_dir, spec_dir in pairs:
+            os.makedirs(spec_dir, exist_ok=True)
+            files = [f for f in sorted(os.listdir(audio_dir))
+                     if f.lower().endswith(('.wav', '.mp3', '.flac', '.ogg'))]
+            converted = 0
+            for fname in tqdm(files, desc=f"Converting {os.path.basename(audio_dir)}"):
+                stem = os.path.splitext(fname)[0]
+                out_path = os.path.join(spec_dir, f"{stem}.png")
+                if not os.path.exists(out_path):
+                    try:
+                        log_mel = audio_to_log_mel(os.path.join(audio_dir, fname))
+                        save_spectrogram_image(log_mel, out_path)
+                        converted += 1
+                    except Exception as e:
+                        print(f"  ✗ Failed {fname}: {e}")
+            print(f"  ✓ {os.path.basename(audio_dir)}: {converted} new spectrograms")
+        print("=" * 60)
     else:
         convert_all_datasets_npy()
 

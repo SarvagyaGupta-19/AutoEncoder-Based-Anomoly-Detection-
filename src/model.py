@@ -33,6 +33,8 @@ Key design decisions:
 import os
 import sys
 
+import tensorflow as tf
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config
 
@@ -157,6 +159,26 @@ def build_decoder(latent_dim=LATENT_DIM):
     return decoder
 
 
+
+def combined_ssim_mse_loss(y_true, y_pred):
+    """
+    Combined loss = 0.5 * MSE + 0.5 * (1 - SSIM)
+
+    Why SSIM for spectrograms:
+        - MSE penalizes all pixel errors equally (a blurry gray average
+          can have low MSE while looking nothing like the original)
+        - SSIM measures structural patterns (luminance, contrast, structure)
+          which directly correspond to acoustic features in mel spectrograms
+        - Together they force the model to be pixel-accurate (MSE)
+          and structurally faithful (SSIM)
+    """
+    mse = tf.reduce_mean(tf.square(y_true - y_pred))
+    # tf.image.ssim expects 4D tensors and max_val=1.0 for [0,1] inputs
+    ssim_val = tf.reduce_mean(tf.image.ssim(y_true, y_pred, max_val=1.0))
+    ssim_loss = 1.0 - ssim_val
+    return 0.5 * mse + 0.5 * ssim_loss
+
+
 def build_autoencoder():
     """
     Build the full autoencoder (encoder + decoder) and compile it.
@@ -177,7 +199,7 @@ def build_autoencoder():
 
     autoencoder.compile(
         optimizer=Adam(learning_rate=config.LEARNING_RATE),
-        loss="mse",
+        loss=combined_ssim_mse_loss,
         metrics=["mae"],
     )
 
