@@ -64,9 +64,9 @@ This converts all `.wav` files to log-mel spectrogram `.png` images in `data/spe
 ### 4. Train the Model
 
 ```bash
-python -m src.train
+python -m src.autoencoder_train
 # Or with custom settings:
-python -m src.train --epochs 100 --batch-size 16
+python -m src.autoencoder_train --epochs 100 --batch-size 16
 ```
 
 Training features:
@@ -78,7 +78,7 @@ Training features:
 ### 5. Fit Anomaly Detector
 
 ```bash
-python -m src.evaluate --fit
+python -m src.autoencoder_evaluate --fit
 ```
 
 This extracts features from training data, fits PCA, and computes adaptive thresholds.
@@ -87,10 +87,10 @@ This extracts features from training data, fits PCA, and computes adaptive thres
 
 ```bash
 # Evaluate test sets
-python -m src.evaluate --test
+python -m src.autoencoder_evaluate --test
 
 # Score a single audio file
-python -m src.evaluate --score path/to/audio.wav
+python -m src.autoencoder_evaluate --score path/to/audio.wav
 ```
 
 ### 7. Web Interface
@@ -111,9 +111,9 @@ Anomalous-Sound-Detection/
 │
 ├── src/
 │   ├── preprocessing.py      # Audio → Log-Mel spectrogram (single source of truth)
-│   ├── model.py              # CNN Autoencoder architecture
-│   ├── train.py              # Training pipeline with callbacks
-│   ├── evaluate.py           # Anomaly scoring + batch evaluation
+│   ├── autoencoder_model.py  # CNN Autoencoder architecture
+│   ├── autoencoder_train.py  # Training pipeline with callbacks
+│   ├── autoencoder_evaluate.py # Anomaly scoring + batch evaluation
 │   └── utils.py              # Visualization utilities
 │
 ├── app/

@@ -20,7 +20,7 @@ import config
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 
-from src.evaluate import AnomalyScorer
+from src.autoencoder_evaluate import AnomalyScorer
 from src.preprocessing import audio_to_log_mel, save_spectrogram_image
 
 # ────────────────────────────────────────────────────────────

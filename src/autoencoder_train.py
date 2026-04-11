@@ -13,8 +13,8 @@ Features:
     - Saves both autoencoder and encoder separately
 
 Usage:
-    python -m src.train
-    python -m src.train --epochs 50 --batch-size 16
+    python -m src.autoencoder_train
+    python -m src.autoencoder_train --epochs 50 --batch-size 16
 """
 
 import os
@@ -36,7 +36,7 @@ from tensorflow.keras.callbacks import (
 
 from src.preprocessing import convert_all_datasets_npy
 from src.augmentation import create_training_dataset, create_validation_dataset
-from src.model import build_autoencoder
+from src.autoencoder_model import build_autoencoder
 
 
 def check_data_ready():

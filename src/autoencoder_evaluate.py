@@ -15,9 +15,9 @@ Workflow:
     C) evaluate_test_set()      — batch evaluation with metrics
 
 Usage:
-    python -m src.evaluate --fit           # fit detector on training data
-    python -m src.evaluate --test          # evaluate test sets
-    python -m src.evaluate --score <file>  # score a single audio file
+    python -m src.autoencoder_evaluate --fit           # fit detector on training data
+    python -m src.autoencoder_evaluate --test          # evaluate test sets
+    python -m src.autoencoder_evaluate --score <file>  # score a single audio file
 """
 
 import os
@@ -67,7 +67,7 @@ def fit_anomaly_detector():
 
     # ── Load encoder ─────────────────────────────────────────
     if not os.path.exists(config.ENCODER_PATH):
-        print("  ✗ Encoder not found. Run training first: python -m src.train")
+        print("  ✗ Encoder not found. Run training first: python -m src.autoencoder_train")
         sys.exit(1)
 
     encoder = load_model(config.ENCODER_PATH, compile=False)
